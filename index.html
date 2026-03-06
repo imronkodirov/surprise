@@ -6,6 +6,7 @@
 <title>Bouquet Builder 🌷</title>
 
 <style>
+
 body{
 margin:0;
 font-family:system-ui, Arial;
@@ -49,7 +50,7 @@ border:none;
 background:#111;
 color:white;
 cursor:pointer;
-transition:opacity .2s, transform .15s, box-shadow .2s, filter .2s;
+transition:opacity .2s, transform .15s, box-shadow .2s;
 font-weight:600;
 }
 
@@ -58,11 +59,17 @@ button:active{transform:scale(.96);}
 button:disabled{
 opacity:.68;
 cursor:default;
-filter:grayscale(.1);
 }
 
 button.shake{animation:shake .4s;}
 button.charge{box-shadow:0 0 18px rgba(255,120,160,.7);}
+button.pulse{animation:pulse 1.2s ease infinite;}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.06)}
+100%{transform:scale(1)}
+}
 
 @keyframes shake{
 0%{transform:translateX(0)}
@@ -82,7 +89,6 @@ min-height:70px;
 .flower{
 display:inline-block;
 animation:bloom .35s ease-out;
-transform-origin:center center;
 margin:4px;
 }
 
@@ -92,13 +98,12 @@ margin:4px;
 }
 
 .swirl{
-position:relative;
 animation:swirl .6s ease-in forwards;
 }
 
 @keyframes swirl{
-0%{transform:scale(1) translate(0,0) rotate(0deg);opacity:1;}
-100%{transform:scale(.2) translate(0,-80px) rotate(360deg);opacity:0;}
+0%{transform:scale(1);opacity:1;}
+100%{transform:scale(.2) translateY(-80px) rotate(360deg);opacity:0;}
 }
 
 #bouquetImage{
@@ -154,7 +159,6 @@ z-index:9999;
 @keyframes petalFall{
 to{
 transform:translateY(110vh) rotate(360deg);
-opacity:1;
 }
 }
 
@@ -185,11 +189,11 @@ animation:sparkleFly 1000ms ease-out forwards;
 
 @keyframes sparkleFly{
 0%{
-transform:translate(0,0) scale(.5) rotate(0deg);
+transform:translate(0,0) scale(.5);
 opacity:1;
 }
 100%{
-transform:translate(var(--x),var(--y)) scale(1.2) rotate(180deg);
+transform:translate(var(--x),var(--y)) scale(1.2);
 opacity:0;
 }
 }
@@ -213,16 +217,17 @@ opacity:0;
 <div id="finalMessage">
 🌸 Bouquet complete 🌸 <br>
 Happy International Women's Day! <br>
-- From Imron
+— From Imron
 </div>
 
 <audio id="dingSound" preload="auto">
-  <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f39+fn5+fX19fXx8fHx7e3t7enp6enl5eXl4eHh4d3d3d3Z2dnZ1dXV1dHR0dHNzc3NycnJycXFxcXBwcHBvb29vbm5ubm1tbW1sbGxsa2traw==" type="audio/wav">
+<source src="ding.mp3" type="audio/mpeg">
 </audio>
 
 </div>
 
 <script>
+
 const flowers=["🌷","🌹","🌼","🌻","🌺","💐"];
 
 const bouquetImages=[
@@ -240,7 +245,6 @@ const INITIAL_LOCK_MS=2500;
 let bouquetIndex=0;
 let clickCount=0;
 let tapLock=false;
-let initialLock=true;
 
 const garden=document.getElementById("garden");
 const button=document.getElementById("generate");
@@ -251,13 +255,13 @@ const finalMessage=document.getElementById("finalMessage");
 const dingSound=document.getElementById("dingSound");
 
 setTimeout(()=>{
-initialLock=false;
 button.disabled=false;
+button.classList.add("pulse");
 },INITIAL_LOCK_MS);
 
 button.addEventListener("click",()=>{
 
-if(initialLock) return;
+button.classList.remove("pulse");
 
 if(button.textContent==="Prepare another bouquet"){
 resetBouquet();
@@ -316,7 +320,6 @@ garden.innerHTML="";
 explosionConfetti();
 mixedPetalBurst();
 
-bouquetImage.classList.remove("show");
 bouquetImage.src=bouquetImages[bouquetIndex];
 bouquetImage.style.display="block";
 
@@ -327,7 +330,7 @@ setTimeout(()=>finalMessage.classList.add("show"),200);
 
 try{
 dingSound.currentTime=0;
-dingSound.play().catch(()=>{});
+dingSound.play();
 }catch(e){}
 
 bouquetImage.scrollIntoView({
@@ -365,12 +368,11 @@ button.textContent=`Tap once more (${clickCount}/${TOTAL_TAPS})`;
 return;
 }
 
-if(clickCount===TOTAL_TAPS-1){
 button.textContent="Final tap";
-}
 }
 
 function resetBouquet(){
+
 bouquetImage.style.display="none";
 bouquetImage.classList.remove("show");
 bouquetImage.src="";
@@ -379,16 +381,12 @@ finalMessage.style.display="none";
 finalMessage.classList.remove("show");
 
 garden.innerHTML="";
-
 clickCount=0;
 
 button.textContent="Tap to Prepare a Bouquet";
 button.disabled=false;
 
-window.scrollTo({
-top:0,
-behavior:"smooth"
-});
+window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function petalsFall(amount){
@@ -411,6 +409,7 @@ for(let i=0;i<140;i++){
 const c=document.createElement("div");
 c.className="explosion";
 c.style.background=colors[Math.floor(Math.random()*colors.length)];
+
 c.style.left=window.innerWidth/2+"px";
 c.style.top=window.innerHeight/2+"px";
 
@@ -421,6 +420,7 @@ c.style.setProperty("--x",x);
 c.style.setProperty("--y",y);
 
 document.body.appendChild(c);
+
 setTimeout(()=>c.remove(),900);
 }
 }
@@ -432,6 +432,7 @@ for(let i=0;i<80;i++){
 const s=document.createElement("div");
 s.className="sparkle";
 s.textContent=particles[Math.floor(Math.random()*particles.length)];
+
 s.style.left=window.innerWidth/2+"px";
 s.style.top=window.innerHeight/2+"px";
 
@@ -442,9 +443,12 @@ s.style.setProperty("--x",x);
 s.style.setProperty("--y",y);
 
 document.body.appendChild(s);
+
 setTimeout(()=>s.remove(),1000);
 }
 }
+
 </script>
+
 </body>
 </html>
