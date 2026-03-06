@@ -1,1 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bouquet Builder 🌷</title>
 
+<style>
+
+body{
+margin:0;
+font-family:system-ui, Arial;
+background:#fff8f8;
+display:flex;
+align-items:center;
+justify-content:center;
+min-height:100vh;
+text-align:center;
+padding:16px;
+box-sizing:border-box;
+}
+
+.card{
+background:white;
+padding:30px;
+border-radius:18px;
+box-shadow:0 10px 30px rgba(0,0,0,0.08);
+width:min(700px,92vw);
+position:relative;
+overflow:hidden;
+}
+
+h1{
+font-weight:800;
+margin-bottom:20px;
+font-size:clamp(28px,4vw,36px);
+}
+
+button{
+padding:14px 26px;
+font-size:18px;
+border-radius:12px;
+border:none;
+background:#111;
+color:white;
+cursor:pointer;
+transition:opacity .2s, transform .15s, box-shadow .2s;
+font-weight:600;
+}
+
+button:hover{opacity:.92;}
+button:active{transform:scale(.96);}
+button:disabled{opacity:.7;cursor:default;}
+
+button.shake{animation:shake .4s;}
+button.charge{box-shadow:0 0 18px rgba(255,120,160,.7);}
+
+@keyframes shake{
+0%{transform:translateX(0)}
+25%{transform:translateX(-4px)}
+50%{transform:translateX(4px)}
+75%{transform:translateX(-4px)}
+100%{transform:translateX(0)}
+}
+
+#garden{
+margin-top:25px;
+font-size:42px;
+line-height:1.7;
+min-height:70px;
+}
+
+.flower{
+display:inline-block;
+animation:bloom .35s ease-out;
+transform-origin:center center;
+margin:4px;
+}
+
+@keyframes bloom{
+0%{transform:scale(.2);opacity:0;}
+100%{transform:scale(1);opacity:1;}
+}
+
+.swirl{
+position:relative;
+animation:swirl .6s ease-in forwards;
+}
+
+@keyframes swirl{
+0%{transform:scale(1) translate(0,0) rotate(0deg);opacity:1;}
+100%{transform:scale(.2) translate(0,-80px) rotate(360deg);opacity:0;}
+}
+
+#bouquetImage{
+margin-top:25px;
+display:none;
+max-width:min(320px,80vw);
+border-radius:14px;
+box-shadow:0 8px 20px rgba(0,0,0,0.15);
+opacity:0;
+transform:scale(.95);
+transition:opacity .8s ease, transform .6s ease;
+}
+
+#bouquetImage.show{
+opacity:1;
+transform:scale(1);
+animation:bouquetPop .6s ease;
+}
+
+@keyframes bouquetPop{
+0%{transform:scale(.85);}
+60%{transform:scale(1.05);}
+100%{transform:scale(1);}
+}
+
+#finalMessage{
+margin-top:18px;
+font-size:20px;
+display:none;
+line-height:1.5;
+opacity:0;
+transform:translateY(8px);
+transition:opacity .6s ease, transform .6s ease;
+}
+
+#finalMessage.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.petal{
+position:fixed;
+top:-40px;
+font-size:22px;
+pointer-events:none;
+animation:petalFall 4s linear forwards;
+z-index:9999;
+}
+
+@keyframes petalFall{
+to{
+transform:translateY(110vh) rotate(360deg);
+opacity:1;
+}
+}
+
+.explosion{
+position:fixed;
+width:10px;
+height:10px;
+border-radius:50%;
+pointer-events:none;
+animation:explode 900ms ease-out forwards;
+z-index:9999;
+}
+
+@keyframes explode{
+to{
+transform:translate(var(--x),var(--y));
+opacity:0;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1 id="title"><strong>Bouquet Builder 🌷</strong></h1>
+
+<button id="generate">Tap to Prepare a Bouquet</button>
+
+<div id="garden"></div>
+
+<img id="bouquetImage" alt="Bouquet">
+
+<div id="finalMessage">
+🌸 Bouquet complete! 🌸<br><br>
+Happy International Women's Day!<br>
+From Imron
+</div>
+
+</div>
+
+<script>
+
+const flowers=["🌷","🌹","🌼","🌻","🌺","💐"];
+
+const bouquetImages=[
+"bouquet1.jpg",
+"bouquet2.jpg",
+"bouquet3.jpg",
+"bouquet4.jpg",
+"bouquet5.jpg"
+];
+
+const TOTAL_TAPS=6;
+const TAP_LOCK_MS=450;
+
+let bouquetIndex=0;
+let clickCount=0;
+let tapLock=false;
+
+const garden=document.getElementById("garden");
+const button=document.getElementById("generate");
+const title=document.getElementById("title");
+const bouquetImage=document.getElementById("bouquetImage");
+const finalMessage=document.getElementById("finalMessage");
+
+button.addEventListener("click",()=>{
+
+if(button.textContent==="Prepare another bouquet"){
+resetBouquet();
+return;
+}
+
+if(tapLock) return;
+
+tapLock=true;
+setTimeout(()=>tapLock=false,TAP_LOCK_MS);
+
+if(clickCount===0){
+title.style.display="none";
+}
+
+clickCount++;
+
+const flower=flowers[Math.floor(Math.random()*flowers.length)];
+
+const span=document.createElement("span");
+span.className="flower";
+span.textContent=flower+" ";
+garden.appendChild(span);
+
+petalsFall(6);
+
+updateButtonText();
+
+if(clickCount===TOTAL_TAPS-1){
+
+if(navigator.vibrate){
+navigator.vibrate(40);
+}
+
+button.classList.add("shake","charge");
+setTimeout(()=>button.classList.remove("shake","charge"),400);
+}
+
+if(clickCount>=TOTAL_TAPS){
+
+button.disabled=true;
+
+/* REMOVE ALL FALLING PETALS BEFORE EXPLOSION */
+
+document.querySelectorAll(".petal").forEach(p=>p.remove());
+
+const flowerNodes=garden.querySelectorAll(".flower");
+
+flowerNodes.forEach((f,i)=>{
+setTimeout(()=>{f.classList.add("swirl");},i*60);
+});
+
+setTimeout(()=>{
+
+garden.innerHTML="";
+
+/* EXPLOSION ONLY */
+
+explosionConfetti();
+
+bouquetImage.classList.remove("show");
+bouquetImage.src=bouquetImages[bouquetIndex];
+bouquetImage.style.display="block";
+
+setTimeout(()=>bouquetImage.classList.add("show"),50);
+
+finalMessage.style.display="block";
+setTimeout(()=>finalMessage.classList.add("show"),200);
+
+bouquetIndex++;
+if(bouquetIndex>=bouquetImages.length) bouquetIndex=0;
+
+clickCount=0;
+
+button.style.display="none";
+
+setTimeout(()=>{
+button.style.display="inline-block";
+button.textContent="Prepare another bouquet";
+button.disabled=false;
+},3000);
+
+},700);
+
+}
+
+});
+
+function updateButtonText(){
+
+if(clickCount===0){
+button.textContent="Tap to Prepare a Bouquet";
+return;
+}
+
+if(clickCount<TOTAL_TAPS-1){
+button.textContent=`Tap once more (${clickCount}/${TOTAL_TAPS})`;
+return;
+}
+
+if(clickCount===TOTAL_TAPS-1){
+button.textContent="Final tap";
+}
+
+}
+
+function resetBouquet(){
+
+bouquetImage.style.display="none";
+bouquetImage.classList.remove("show");
+bouquetImage.src="";
+
+finalMessage.style.display="none";
+finalMessage.classList.remove("show");
+
+garden.innerHTML="";
+
+clickCount=0;
+
+button.textContent="Tap to Prepare a Bouquet";
+
+button.disabled=false;
+
+}
+
+function petalsFall(amount){
+
+const petals=["🌸","🌺","🌼"];
+
+for(let i=0;i<amount;i++){
+
+const p=document.createElement("div");
+p.className="petal";
+
+p.textContent=petals[Math.floor(Math.random()*petals.length)];
+
+p.style.left=Math.random()*window.innerWidth+"px";
+
+document.body.appendChild(p);
+
+setTimeout(()=>p.remove(),4000);
+
+}
+
+}
+
+function explosionConfetti(){
+
+const colors=["#ff4d4d","#ffb84d","#4dd2ff","#7dff4d","#b04dff","#ffd24d"];
+
+for(let i=0;i<140;i++){
+
+const c=document.createElement("div");
+c.className="explosion";
+
+c.style.background=colors[Math.floor(Math.random()*colors.length)];
+
+c.style.left=window.innerWidth/2+"px";
+c.style.top=window.innerHeight/2+"px";
+
+const x=(Math.random()*700-350)+"px";
+const y=(Math.random()*700-350)+"px";
+
+c.style.setProperty("--x",x);
+c.style.setProperty("--y",y);
+
+document.body.appendChild(c);
+
+setTimeout(()=>c.remove(),900);
+
+}
+
+}
+
+</script>
+</body>
+</html>
