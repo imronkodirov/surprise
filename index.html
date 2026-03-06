@@ -6,7 +6,6 @@
 <title>Bouquet Builder 🌷</title>
 
 <style>
-
 body{
 margin:0;
 font-family:system-ui, Arial;
@@ -50,13 +49,17 @@ border:none;
 background:#111;
 color:white;
 cursor:pointer;
-transition:opacity .2s, transform .15s, box-shadow .2s;
+transition:opacity .2s, transform .15s, box-shadow .2s, filter .2s;
 font-weight:600;
 }
 
 button:hover{opacity:.92;}
 button:active{transform:scale(.96);}
-button:disabled{opacity:.7;cursor:default;}
+button:disabled{
+opacity:.68;
+cursor:default;
+filter:grayscale(.1);
+}
 
 button.shake{animation:shake .4s;}
 button.charge{box-shadow:0 0 18px rgba(255,120,160,.7);}
@@ -172,6 +175,25 @@ opacity:0;
 }
 }
 
+.sparkle{
+position:fixed;
+pointer-events:none;
+z-index:10000;
+font-size:18px;
+animation:sparkleFly 1000ms ease-out forwards;
+}
+
+@keyframes sparkleFly{
+0%{
+transform:translate(0,0) scale(.5) rotate(0deg);
+opacity:1;
+}
+100%{
+transform:translate(var(--x),var(--y)) scale(1.2) rotate(180deg);
+opacity:0;
+}
+}
+
 </style>
 </head>
 
@@ -182,7 +204,7 @@ opacity:0;
 <h1 id="title"><strong>Bouquet Builder 🌷</strong></h1>
 <div class="subtitle">For the amazing women I know.</div>
 
-<button id="generate">Tap to Prepare a Bouquet</button>
+<button id="generate" disabled>Tap to Prepare a Bouquet</button>
 
 <div id="garden"></div>
 
@@ -194,10 +216,13 @@ Happy International Women's Day! <br>
 From Imron
 </div>
 
+<audio id="dingSound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/f39+fn5+fX19fXx8fHx7e3t7enp6enl5eXl4eHh4d3d3d3Z2dnZ1dXV1dHR0dHNzc3NycnJycXFxcXBwcHBvb29vbm5ubm1tbW1sbGxsa2traw==" type="audio/wav">
+</audio>
+
 </div>
 
 <script>
-
 const flowers=["🌷","🌹","🌼","🌻","🌺","💐"];
 
 const bouquetImages=[
@@ -210,18 +235,29 @@ const bouquetImages=[
 
 const TOTAL_TAPS=6;
 const TAP_LOCK_MS=450;
+const INITIAL_LOCK_MS=2500;
 
 let bouquetIndex=0;
 let clickCount=0;
 let tapLock=false;
+let initialLock=true;
 
 const garden=document.getElementById("garden");
 const button=document.getElementById("generate");
 const title=document.getElementById("title");
+const subtitle=document.querySelector(".subtitle");
 const bouquetImage=document.getElementById("bouquetImage");
 const finalMessage=document.getElementById("finalMessage");
+const dingSound=document.getElementById("dingSound");
+
+setTimeout(()=>{
+initialLock=false;
+button.disabled=false;
+},INITIAL_LOCK_MS);
 
 button.addEventListener("click",()=>{
+
+if(initialLock) return;
 
 if(button.textContent==="Prepare another bouquet"){
 resetBouquet();
@@ -235,7 +271,7 @@ setTimeout(()=>tapLock=false,TAP_LOCK_MS);
 
 if(clickCount===0){
 title.style.display="none";
-document.querySelector(".subtitle").style.display="none";
+subtitle.style.display="none";
 }
 
 clickCount++;
@@ -278,6 +314,7 @@ setTimeout(()=>{
 garden.innerHTML="";
 
 explosionConfetti();
+mixedPetalBurst();
 
 bouquetImage.classList.remove("show");
 bouquetImage.src=bouquetImages[bouquetIndex];
@@ -287,6 +324,16 @@ setTimeout(()=>bouquetImage.classList.add("show"),50);
 
 finalMessage.style.display="block";
 setTimeout(()=>finalMessage.classList.add("show"),200);
+
+try{
+dingSound.currentTime=0;
+dingSound.play().catch(()=>{});
+}catch(e){}
+
+bouquetImage.scrollIntoView({
+behavior:"smooth",
+block:"center"
+});
 
 bouquetIndex++;
 if(bouquetIndex>=bouquetImages.length) bouquetIndex=0;
@@ -308,7 +355,6 @@ button.disabled=false;
 });
 
 function updateButtonText(){
-
 if(clickCount===0){
 button.textContent="Tap to Prepare a Bouquet";
 return;
@@ -322,11 +368,9 @@ return;
 if(clickCount===TOTAL_TAPS-1){
 button.textContent="Final tap";
 }
-
 }
 
 function resetBouquet(){
-
 bouquetImage.style.display="none";
 bouquetImage.classList.remove("show");
 bouquetImage.src="";
@@ -339,43 +383,34 @@ garden.innerHTML="";
 clickCount=0;
 
 button.textContent="Tap to Prepare a Bouquet";
-
 button.disabled=false;
 
+window.scrollTo({
+top:0,
+behavior:"smooth"
+});
 }
 
 function petalsFall(amount){
-
-const petals=["🌸","🌺","🌼"];
+const petals=["🍃","✨","🌿"];
 
 for(let i=0;i<amount;i++){
-
 const p=document.createElement("div");
 p.className="petal";
-
 p.textContent=petals[Math.floor(Math.random()*petals.length)];
-
 p.style.left=Math.random()*window.innerWidth+"px";
-
 document.body.appendChild(p);
-
 setTimeout(()=>p.remove(),4000);
-
 }
-
 }
 
 function explosionConfetti(){
-
 const colors=["#ff4d4d","#ffb84d","#4dd2ff","#7dff4d","#b04dff","#ffd24d"];
 
 for(let i=0;i<140;i++){
-
 const c=document.createElement("div");
 c.className="explosion";
-
 c.style.background=colors[Math.floor(Math.random()*colors.length)];
-
 c.style.left=window.innerWidth/2+"px";
 c.style.top=window.innerHeight/2+"px";
 
@@ -386,13 +421,30 @@ c.style.setProperty("--x",x);
 c.style.setProperty("--y",y);
 
 document.body.appendChild(c);
-
 setTimeout(()=>c.remove(),900);
-
+}
 }
 
-}
+function mixedPetalBurst(){
+const particles=["🌸","🌺","🌼","✨","💖"];
 
+for(let i=0;i<80;i++){
+const s=document.createElement("div");
+s.className="sparkle";
+s.textContent=particles[Math.floor(Math.random()*particles.length)];
+s.style.left=window.innerWidth/2+"px";
+s.style.top=window.innerHeight/2+"px";
+
+const x=(Math.random()*900-450)+"px";
+const y=(Math.random()*700-350)+"px";
+
+s.style.setProperty("--x",x);
+s.style.setProperty("--y",y);
+
+document.body.appendChild(s);
+setTimeout(()=>s.remove(),1000);
+}
+}
 </script>
 </body>
 </html>
